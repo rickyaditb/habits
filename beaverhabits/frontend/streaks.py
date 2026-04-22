@@ -14,6 +14,7 @@ from beaverhabits.frontend.layout import layout
 from beaverhabits.storage.storage import Habit
 
 WEEKS_TO_DISPLAY = 53
+STREAKS_CONTENT_WIDTH = 1106
 
 
 def compat_card():
@@ -55,7 +56,11 @@ def heatmap_page(today: datetime.date, habit: Habit):
     ui.add_css(NOTE_CSS)
 
     # Header
-    with layout(title=habit.name):
+    with layout(
+        title=habit.name,
+        content_width=None,
+        header_width=STREAKS_CONTENT_WIDTH,
+    ):
         # Main body
         history(today, habit)
         streaks(today, habit)

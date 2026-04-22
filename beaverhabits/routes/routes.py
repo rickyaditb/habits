@@ -29,6 +29,7 @@ from beaverhabits.frontend.components import (
 )
 from beaverhabits.frontend.export_page import export_page
 from beaverhabits.frontend.habit_page import habit_page_ui
+from beaverhabits.frontend.history_page import all_history_page_ui, history_page_ui
 from beaverhabits.frontend.import_page import import_ui_page
 from beaverhabits.frontend.index_page import index_page_ui
 from beaverhabits.frontend.layout import custom_headers, redirect
@@ -100,6 +101,15 @@ async def demo_habit_page_heatmap(habit_id: str) -> None:
     heatmap_page(today, habit)
 
 
+@ui.page("/demo/habits/{habit_id}/history")
+async def demo_habit_history_page(habit_id: str) -> None:
+    habit = await views.get_session_habit(habit_id)
+    if habit is None:
+        redirect("")
+        return
+    history_page_ui(habit)
+
+
 @ui.page("/demo/completion-status")
 async def demo_chip_sets() -> None:
     await chip_sets_page()
@@ -160,6 +170,29 @@ async def gui_habit_page_heatmap(
     habit = await views.get_user_habit(user, habit_id)
     today = await get_user_today_date()
     heatmap_page(today, habit)
+
+
+@ui.page("/gui/habits/{habit_id}/history")
+async def gui_habit_history_page(
+    habit_id: str, user: User = Depends(current_active_user)
+) -> None:
+    habit = await views.get_user_habit(user, habit_id)
+    history_page_ui(habit)
+
+
+@ui.page("/demo/history")
+async def demo_history_redirect() -> None:
+    days = await dummy_days(settings.INDEX_HABIT_DATE_COLUMNS)
+    habit_list = views.get_or_create_session_habit_list(days)
+    all_history_page_ui(habit_list)
+
+
+@ui.page("/gui/history")
+async def gui_history_redirect(
+    user: User = Depends(current_active_user),
+) -> None:
+    habit_list = await views.get_user_habit_list(user)
+    all_history_page_ui(habit_list)
 
 
 @ui.page("/gui/export")

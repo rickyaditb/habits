@@ -29,6 +29,10 @@ from beaverhabits.storage.meta import (
 from beaverhabits.storage.storage import Habit, HabitList
 from beaverhabits.version import IDENTITY
 
+LAYOUT_MAX_WIDTH = 1106
+DEFAULT_HEADER_WIDTH = 376
+DEFAULT_CONTENT_WIDTH = 376
+
 
 def pwa_headers():
     # Extend background to iOS notch
@@ -176,6 +180,9 @@ def menu_component():
                 menu_icon_item("Stats", lambda: redirect("stats"))
                 separator()
 
+                menu_icon_item("History", lambda: redirect("history"))
+                separator()
+
         separator()
 
         # About page
@@ -193,35 +200,48 @@ def layout(
     habit_list: HabitList | None = None,
     page_ui: ui.refreshable | None = None,
     header_actions: Callable[[], None] | None = None,
+    content_width: int | None = DEFAULT_CONTENT_WIDTH,
+    header_width: int | None = None,
 ):
     # Standard headers
     custom_headers()
     pwa_headers()
 
     # Center the content on small screens
-    with ui.column().classes("mx-auto mx-0"):
+    with ui.column().classes("w-full mx-auto").style(
+        f"max-width: {LAYOUT_MAX_WIDTH}px"
+    ):
 
-        # Layout wrapper
-        with ui.row().classes("w-full gap-x-1"):
-            title, target = title or page_title(), get_root_path()
-            menu_header(title, target=target)
-            ui.space()
+        content_style = f"max-width: {content_width}px" if content_width else None
+        header_max_width = header_width or content_width or DEFAULT_HEADER_WIDTH
+        header_style = f"max-width: {header_max_width}px; margin-left: auto; margin-right: auto"
 
-            if habit:
-                edit_dialog = habit_edit_dialog(habit)
-                edit_btn = menu_icon_button("sym_r_pen_size_3", tooltip="Edit habit")
-                edit_btn.on_click(edit_dialog.open)
-            elif habit_list and "add" in page_path():
-                with menu_icon_button("sym_o_swap_vert", tooltip="Sort"):
-                    sort_menu(habit_list)
-            elif "stats" in page_path() and page_ui:
-                with menu_icon_button("sym_o_expand_content", tooltip="Date"):
-                    stats_date_pick_menu()
+        with ui.column().classes("w-full"):
+            with ui.row().classes("w-full gap-x-1").style(header_style):
+                title, target = title or page_title(), get_root_path()
+                menu_header(title, target=target)
+                ui.space()
 
-            if header_actions:
-                header_actions()
+                if habit:
+                    edit_dialog = habit_edit_dialog(habit)
+                    edit_btn = menu_icon_button("sym_r_pen_size_3", tooltip="Edit habit")
+                    edit_btn.on_click(edit_dialog.open)
+                elif habit_list and "add" in page_path():
+                    with menu_icon_button("sym_o_swap_vert", tooltip="Sort"):
+                        sort_menu(habit_list)
+                elif "stats" in page_path() and page_ui:
+                    with menu_icon_button("sym_o_expand_content", tooltip="Date"):
+                        stats_date_pick_menu()
 
-            with menu_icon_button("sym_o_menu"):
-                menu_component()
+                if header_actions:
+                    header_actions()
 
-        yield
+                with menu_icon_button("sym_o_menu"):
+                    menu_component()
+
+            with ui.column().classes("w-full items-center"):
+                if content_style:
+                    with ui.column().classes("w-full").style(content_style):
+                        yield
+                else:
+                    yield

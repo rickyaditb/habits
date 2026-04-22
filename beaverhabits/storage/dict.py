@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass, field
+import pytz
 
 from beaverhabits.logger import logger
 from beaverhabits.storage.storage import (
@@ -43,6 +44,29 @@ class DictRecord(CheckedRecord, DictStorage):
     def day(self) -> datetime.date:
         date = datetime.datetime.strptime(self.data["day"], DAY_MASK)
         return date.date()
+
+    @property
+    def completed_at(self) -> datetime.datetime | None:
+        value = self.data.get("completed_at")
+        if not value:
+            return None
+
+        try:
+            return datetime.datetime.fromisoformat(value)
+        except ValueError:
+            logger.error(f"Invalid completed_at value: {value}")
+            self.data.pop("completed_at", None)
+            return None
+
+    @completed_at.setter
+    def completed_at(self, value: datetime.datetime | None) -> None:
+        if value is None:
+            self.data.pop("completed_at", None)
+            return
+
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=pytz.UTC)
+        self.data["completed_at"] = value.isoformat()
 
     @property
     def done(self) -> bool:
@@ -189,6 +213,8 @@ class DictHabit(Habit[DictRecord], DictStorage):
     async def tick(
         self, day: datetime.date, done: bool, text: str | None = None
     ) -> CheckedRecord:
+        now = datetime.datetime.now(pytz.UTC)
+
         # Find the record in the cache
         record = self.ticked_data.get(day)
 
@@ -197,6 +223,8 @@ class DictHabit(Habit[DictRecord], DictStorage):
             new_data = {}
             if record.done != done:
                 new_data["done"] = done
+                if done:
+                    new_data["completed_at"] = now.isoformat()
             if text is not None and record.text != text:
                 new_data["text"] = text
             if new_data:
@@ -205,6 +233,8 @@ class DictHabit(Habit[DictRecord], DictStorage):
         else:
             # Update storage once
             data = {"day": day.strftime(DAY_MASK), "done": done}
+            if done:
+                data["completed_at"] = now.isoformat()
             if text is not None:
                 data["text"] = text
             self.data["records"].append(data)

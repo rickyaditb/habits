@@ -3,6 +3,7 @@ import datetime
 from nicegui import ui
 from nicegui.testing import User
 
+from beaverhabits.frontend.history_page import all_history_page_ui, history_page_ui
 from beaverhabits.frontend.add_page import add_page_ui
 from beaverhabits.frontend.habit_page import habit_page_ui
 from beaverhabits.frontend.index_page import index_page_ui
@@ -84,3 +85,32 @@ async def test_habit_stats_page(user) -> None:
 
     await user.open("/")
     await user.should_see("Order pizz")
+
+
+async def test_habit_history_page(user) -> None:
+    days = dummy_days(7)
+    habits = dummy_habit_list(days)
+    habit = habits.habits[0]
+
+    @ui.page("/")
+    def page():
+        history_page_ui(habit)
+
+    await user.open("/")
+    await user.should_see("Completion History")
+    await user.should_see("Order pizz")
+
+
+async def test_global_history_page(user) -> None:
+    days = dummy_days(7)
+    habits = dummy_habit_list(days)
+    first_habit = habits.habits[0]
+    await first_habit.tick(days[-1], True)
+
+    @ui.page("/")
+    def page():
+        all_history_page_ui(habits)
+
+    await user.open("/")
+    await user.should_see("Completion History")
+    await user.should_see(first_habit.name)

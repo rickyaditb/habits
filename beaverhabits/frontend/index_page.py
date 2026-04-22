@@ -19,6 +19,7 @@ from beaverhabits.frontend.components import (
     tag_filter_component,
 )
 from beaverhabits.frontend.layout import layout
+from beaverhabits.storage.meta import get_root_path
 from beaverhabits.storage.storage import (
     Habit,
     HabitList,
@@ -174,6 +175,12 @@ def index_page_ui(days: list[datetime.date], habits: HabitList):
 
     @ui.refreshable
     def header_actions_ui() -> None:
+        menu_icon_button(
+            "sym_o_history",
+            click=lambda: ui.navigate.to(f"{get_root_path()}/history"),
+            tooltip="History",
+        )
+
         if not settings.ENABLE_TAG_FILTERS or not get_all_tags(active_habits):
             return
 

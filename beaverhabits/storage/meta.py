@@ -29,3 +29,7 @@ def get_habit_page_path(habit: Habit) -> str:
 
 def get_habit_heatmap_path(habit: Habit) -> str:
     return f"{get_root_path()}/habits/{habit.id}/streak"
+
+
+def get_habit_history_path(habit: Habit) -> str:
+    return f"{get_root_path()}/habits/{habit.id}/history"

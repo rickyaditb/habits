@@ -23,10 +23,11 @@ from beaverhabits.frontend.css import (
     NOTE_CSS,
 )
 from beaverhabits.frontend.layout import layout, redirect
-from beaverhabits.storage.meta import get_habit_heatmap_path
+from beaverhabits.storage.meta import get_habit_heatmap_path, get_habit_history_path
 from beaverhabits.storage.storage import EVERY_DAY, Habit
 
 WEEKS_TO_DISPLAY = 15
+HABIT_CONTENT_WIDTH = 350
 
 
 def card_title(title: str, target: str):
@@ -56,6 +57,7 @@ def card(link: str | None = None, padding: float = 3, width: int | None = 350):
 @ui.refreshable
 def habit_page(today: datetime.date, habit: Habit):
     target = get_habit_heatmap_path(habit)
+    history_target = get_habit_history_path(habit)
 
     with ui.column().classes("gap-y-2"):
         with card():
@@ -72,7 +74,7 @@ def habit_page(today: datetime.date, habit: Habit):
             habit_heat_map(habit, habit_calendar, refresh=habit_page.refresh)
 
         with card():
-            card_title("Last Year", target)
+            card_title("Last Year", history_target)
             habit_history(today, habit)
 
         with card(padding=2):
@@ -100,5 +102,5 @@ def habit_page_ui(today: datetime.date, habit: Habit):
     ]
     ui.add_css("\n".join(CUSTOM_CSS))
 
-    with layout(title=habit.name, habit=habit):
+    with layout(title=habit.name, habit=habit, content_width=HABIT_CONTENT_WIDTH):
         habit_page(today, habit)
