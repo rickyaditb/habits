@@ -73,7 +73,12 @@ def habit_row(habit: Habit, tag: str, days: list[datetime.date]):
     for day in days:
         status = status_map.get(day, [])
         checkbox = HabitCheckBox(
-            status, habit, today, day, refresh=habit_list_ui.refresh
+            status,
+            habit,
+            today,
+            day,
+            refresh=habit_list_ui.refresh,
+            enable_long_press_note=False,
         )
         checkbox.classes(RIGHT_CLASSES)
         # checkbox.classes("theme-icon-lazy invisible")

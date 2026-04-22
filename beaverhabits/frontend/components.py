@@ -244,11 +244,13 @@ class HabitCheckBox(ui.checkbox):
         today: datetime.date,
         day: datetime.date,
         refresh: Callable | None = None,
+        enable_long_press_note: bool = True,
     ) -> None:
         self.habit = habit
         self.day = day
         self.today = today
         self.status = status
+        self.enable_long_press_note = enable_long_press_note
         value = CStatus.DONE in status
         self.row_refresh = refresh
         super().__init__("", value=value)
@@ -266,15 +268,17 @@ class HabitCheckBox(ui.checkbox):
         # 1. Mouse click: mousedown -> mouseup -> click
         # 2. Touch click: touchstart -> touchend -> mousemove -> mousedown -> mouseup -> click
         # 3. Touch move:  touchstart -> touchmove -> touchend
-        self.on("mousedown", self._mouse_down_event)
-        self.on("touchstart.passive", self._mouse_down_event)
+        if self.enable_long_press_note:
+            self.on("mousedown", self._mouse_down_event)
+            self.on("touchstart.passive", self._mouse_down_event)
 
         # Event modifiers
         # 1. *Prevent* checkbox default behavior
         # 2. *Prevent* propagation of the event
-        self.on("mouseup", self._mouse_up_event)
-        self.on("touchend", self._mouse_up_event)
-        self.on("touchmove.passive", self._mouse_move_event, throttle=1)
+        if self.enable_long_press_note:
+            self.on("mouseup", self._mouse_up_event)
+            self.on("touchend", self._mouse_up_event)
+            self.on("touchmove.passive", self._mouse_move_event, throttle=1)
         # self.on("mousemove", self._mouse_move_event)
 
         # Checklist: value change, scrolling
