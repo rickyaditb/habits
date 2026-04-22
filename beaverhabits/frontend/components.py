@@ -1148,11 +1148,11 @@ class TagChip(ui.chip):
         self.style("padding: 8px 9px")
         self.style("margin: 0px 2px")
 
-        self.on_click(self._async_task)
+        self.on_selection_change(self._on_selection_change)
         self.refresh = refresh
 
-    async def _async_task(self: Self):
-        if self.selected:
+    def _on_selection_change(self, e: events.ValueChangeEventArguments) -> None:
+        if e.value:
             TagManager.add(self.text)
         else:
             TagManager.remove(self.text)

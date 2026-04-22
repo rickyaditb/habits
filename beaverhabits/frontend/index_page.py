@@ -11,7 +11,6 @@ from beaverhabits.frontend.components import (
     IndexStreakBadge,
     IndexTotalBadge,
     TagManager,
-    filter_habits_with_tags,
     get_all_tags,
     habit_name_menu,
     habits_by_tags,
@@ -93,13 +92,23 @@ def habit_row(habit: Habit, tag: str, days: list[datetime.date]):
         IndexTotalBadge(today, habit).classes(RIGHT_CLASSES)
 
 
-@ui.refreshable
-def habit_list_ui(days: list[datetime.date], active_habits: List[Habit]):
-    if settings.ENABLE_TAG_FILTERS:
-        active_habits = filter_habits_with_tags(active_habits)
+def habit_matches_tag_filters(habit: Habit) -> bool:
+    selected_tags = TagManager.get_all()
+    if not selected_tags:
+        return True
 
+    if not habit.tags:
+        return "Others" in selected_tags
+
+    return any(tag in selected_tags for tag in habit.tags)
+
+
+@ui.refreshable
+def habit_list_ui(days: list[datetime.date], active_habits: List[Habit], update_filter_state=None):
     # Total cloumn for each row
     columns = NAME_COLS + len(days) * DATE_COLS + COUNT_BADGE_COLS
+    row_elements = []
+    group_elements = []
 
     with ui.column().classes("gap-1.5"):
         # Date Headers
@@ -117,12 +126,19 @@ def habit_list_ui(days: list[datetime.date], active_habits: List[Habit]):
             if not habit_list:
                 continue
 
-            for habit in habit_list:
-                with ui.card().classes(COMPAT_CLASSES).classes("theme-card-shadow"):
-                    with grid(columns, 1):
-                        habit_row(habit, tag, days)
+            with ui.column().classes("gap-1.5") as group_column:
+                for habit in habit_list:
+                    with ui.card().classes(COMPAT_CLASSES).classes("theme-card-shadow") as card:
+                        with grid(columns, 1):
+                            habit_row(habit, tag, days)
+                    row_elements.append((tag, habit, card))
 
-            ui.space()
+                ui.space()
+
+            group_elements.append((tag, group_column))
+
+    if update_filter_state:
+        update_filter_state(row_elements, group_elements)
 
 
 @ui.refreshable
@@ -130,12 +146,34 @@ def index_page_ui(days: list[datetime.date], habits: HabitList):
     active_habits = HabitListBuilder(habits).status(HabitStatus.ACTIVE).build()
     if settings.INDEX_HABIT_DATE_REVERSE:
         days = list(reversed(days))
+    row_elements = []
+    group_elements = []
 
-    def toggle_tag_filters() -> None:
-        TagManager.toggle_visible()
-        index_page_ui.refresh(days, habits)
+    def sync_filter_state(new_row_elements, new_group_elements) -> None:
+        row_elements.clear()
+        row_elements.extend(new_row_elements)
+        group_elements.clear()
+        group_elements.extend(new_group_elements)
+        apply_tag_filters()
 
-    def header_actions() -> None:
+    def apply_tag_filters() -> None:
+        visible_groups = set()
+        for tag, habit, element in row_elements:
+            visible = not settings.ENABLE_TAG_FILTERS or habit_matches_tag_filters(habit)
+            element.set_visibility(visible)
+            if visible:
+                visible_groups.add(tag)
+
+        for tag, element in group_elements:
+            element.set_visibility(tag in visible_groups)
+
+    @ui.refreshable
+    def tag_filters_ui() -> None:
+        if settings.ENABLE_TAG_FILTERS:
+            tag_filter_component(active_habits, refresh=apply_tag_filters)
+
+    @ui.refreshable
+    def header_actions_ui() -> None:
         if not settings.ENABLE_TAG_FILTERS or not get_all_tags(active_habits):
             return
 
@@ -143,14 +181,18 @@ def index_page_ui(days: list[datetime.date], habits: HabitList):
         tooltip = "Hide category tags" if TagManager.is_visible() else "Show category tags"
         menu_icon_button(icon, click=toggle_tag_filters, tooltip=tooltip)
 
-    with layout(habit_list=habits, header_actions=header_actions):
-        if settings.ENABLE_TAG_FILTERS:
-            tag_filter_component(active_habits, refresh=habit_list_ui.refresh)
+    def toggle_tag_filters() -> None:
+        TagManager.toggle_visible()
+        header_actions_ui.refresh()
+        tag_filters_ui.refresh()
+
+    with layout(habit_list=habits, header_actions=header_actions_ui):
+        tag_filters_ui()
 
         if not active_habits:
             ui.label("List is empty.").classes("mx-auto w-80")
             return
-        habit_list_ui(days, active_habits)
+        habit_list_ui(days, active_habits, sync_filter_state)
 
     # placeholder to preload js cache (daily notes)
     textarea.Textarea("").classes("hidden").props('aria-hidden="true"')
