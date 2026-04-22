@@ -135,6 +135,10 @@ body {
   .theme-card-shadow {
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
   }
+
+  .theme-tag-chip.q-chip--selected .q-chip__icon {
+    color: #f5f5f5;
+  }
 }
 
 .body--dark {

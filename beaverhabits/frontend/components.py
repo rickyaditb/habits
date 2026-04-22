@@ -1142,6 +1142,7 @@ class TagChip(ui.chip):
         )
 
         # https://tailwindcss.com/docs/colors
+        self.classes("theme-tag-chip")
         self.props("dense")
         self.style("font-size: 80%; font-weight: 500")
         self.style("padding: 8px 9px")
