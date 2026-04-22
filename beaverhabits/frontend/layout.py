@@ -183,6 +183,9 @@ def menu_component():
                 menu_icon_item("History", lambda: redirect("history"))
                 separator()
 
+                menu_icon_item("Settings", lambda: redirect("settings"))
+                separator()
+
         separator()
 
         # About page

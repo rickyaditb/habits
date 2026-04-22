@@ -31,6 +31,7 @@ from beaverhabits.storage.storage import Habit, HabitList, HabitListBuilder, Hab
 from beaverhabits.utils import generate_short_hash, ratelimiter, send_email
 
 user_storage = get_user_dict_storage()
+MAX_HOMEPAGE_DAY_COLUMNS = 6
 
 
 def dummy_empty_habit_list() -> DictHabitList:
@@ -250,14 +251,22 @@ class UserConfigs:
     custom_css: str | None = None
     default_chips: list[str] | None = None
     default_chips_mapping: dict[str, str] | None = None
+    homepage_day_columns: int | None = None
 
 
-async def get_user_configs(user: User) -> UserConfigs:
+async def get_user_configs(user: User | None) -> UserConfigs:
+    if user is None:
+        return UserConfigs(
+            custom_css=app.storage.user.get("custom_css", None),
+            homepage_day_columns=app.storage.user.get("homepage_day_columns", None),
+        )
+
     configs = await crud.get_user_configs(user) or {}
     return UserConfigs(
         custom_css=configs.get("css", None),
         default_chips=configs.get("default_chips", None),
         default_chips_mapping=configs.get("default_chips_mapping", None),
+        homepage_day_columns=configs.get("homepage_day_columns", None),
     )
 
 
@@ -268,6 +277,7 @@ async def cache_user_configs(user: User) -> None:
             "custom_css": configs.custom_css or "",
             "default_chips": configs.default_chips or [],
             "default_chips_mapping": configs.default_chips_mapping or {},
+            "homepage_day_columns": get_homepage_day_columns(configs),
         }
     )
 
@@ -277,16 +287,17 @@ def sanitize_css(css: str) -> str:
     return re.sub(r"<[^>]*>", "", css)
 
 
-async def update_custom_css(user: User, css: str) -> None:
+async def update_custom_css(user: User | None, css: str) -> None:
     css = sanitize_css(css)
     app.storage.user["custom_css"] = css
 
-    await crud.update_user_configs(
-        user,
-        {
-            "css": css,
-        },
-    )
+    if user:
+        await crud.update_user_configs(
+            user,
+            {
+                "css": css,
+            },
+        )
 
 
 def get_default_chips() -> list[str]:
@@ -309,6 +320,33 @@ async def update_default_chips(
             {
                 "default_chips": chips,
                 "default_chips_mapping": mapping,
+            },
+        )
+
+
+def get_homepage_day_columns(configs: UserConfigs | None = None) -> int:
+    if configs and configs.homepage_day_columns is not None:
+        return min(MAX_HOMEPAGE_DAY_COLUMNS, max(1, int(configs.homepage_day_columns)))
+
+    try:
+        value = app.storage.user.get("homepage_day_columns")
+        if value is not None:
+            return min(MAX_HOMEPAGE_DAY_COLUMNS, max(1, int(value)))
+    except Exception as e:
+        logger.error(f"Failed to read homepage day columns: {e}")
+
+    return min(MAX_HOMEPAGE_DAY_COLUMNS, settings.INDEX_HABIT_DATE_COLUMNS)
+
+
+async def update_homepage_day_columns(user: User | None, columns: int) -> None:
+    columns = min(MAX_HOMEPAGE_DAY_COLUMNS, max(1, int(columns)))
+    app.storage.user["homepage_day_columns"] = columns
+
+    if user:
+        await crud.update_user_configs(
+            user,
+            {
+                "homepage_day_columns": columns,
             },
         )
 

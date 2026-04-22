@@ -66,7 +66,7 @@ def add_ui(habit_list: HabitList):
                 continue
 
         with components.HabitOrderCard(item) as card:
-            with ui.row().classes("min-h-10 w-80 items-center gap-2"):
+            with ui.row().classes("min-h-10 w-full items-center gap-2"):
                 ui.label(item.name)
 
                 ui.space()

@@ -50,7 +50,7 @@ UNRESTRICTED_PAGE_ROUTES = ("/login", "/register")
 
 @ui.page("/demo")
 async def demo_index_page() -> None:
-    days = await dummy_days(settings.INDEX_HABIT_DATE_COLUMNS)
+    days = await dummy_days(views.get_homepage_day_columns())
     habit_list = views.get_or_create_session_habit_list(days)
     index_page_ui(days, habit_list)
 
@@ -60,14 +60,14 @@ async def demo_index_page() -> None:
 
 @ui.page("/demo/add")
 async def demo_add_page() -> None:
-    days = await dummy_days(settings.INDEX_HABIT_DATE_COLUMNS)
+    days = await dummy_days(views.get_homepage_day_columns())
     habit_list = views.get_or_create_session_habit_list(days)
     add_page_ui(habit_list)
 
 
 @ui.page("/demo/stats")
 async def demo_stats_page() -> None:
-    days = await dummy_days(settings.INDEX_HABIT_DATE_COLUMNS)
+    days = await dummy_days(views.get_homepage_day_columns())
     habit_list = views.get_or_create_session_habit_list(days)
     today = await get_user_today_date()
     stats_page_ui(today, habit_list)
@@ -75,9 +75,14 @@ async def demo_stats_page() -> None:
 
 @ui.page("/demo/order")
 async def demo_order_page() -> None:
-    days = await dummy_days(settings.INDEX_HABIT_DATE_COLUMNS)
+    days = await dummy_days(views.get_homepage_day_columns())
     habit_list = views.get_or_create_session_habit_list(days)
     order_page_ui(habit_list)
+
+
+@ui.page("/demo/settings")
+async def demo_settings() -> None:
+    await settings_page()
 
 
 @ui.page("/demo/habits/{habit_id}")
@@ -129,7 +134,8 @@ async def demo_export() -> None:
 async def index_page(
     user: User = Depends(current_active_user),
 ) -> None:
-    days = await dummy_days(settings.INDEX_HABIT_DATE_COLUMNS)
+    configs = await views.get_user_configs(user)
+    days = await dummy_days(views.get_homepage_day_columns(configs))
     habit_list = await views.get_user_habit_list(user)
     index_page_ui(days, habit_list)
 
@@ -182,7 +188,7 @@ async def gui_habit_history_page(
 
 @ui.page("/demo/history")
 async def demo_history_redirect() -> None:
-    days = await dummy_days(settings.INDEX_HABIT_DATE_COLUMNS)
+    days = await dummy_days(views.get_homepage_day_columns())
     habit_list = views.get_or_create_session_habit_list(days)
     all_history_page_ui(habit_list)
 
