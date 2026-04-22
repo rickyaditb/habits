@@ -1,5 +1,6 @@
 import time
 from contextlib import contextmanager
+from typing import Callable
 
 from nicegui import background_tasks, ui
 
@@ -191,6 +192,7 @@ def layout(
     habit: Habit | None = None,
     habit_list: HabitList | None = None,
     page_ui: ui.refreshable | None = None,
+    header_actions: Callable[[], None] | None = None,
 ):
     # Standard headers
     custom_headers()
@@ -215,6 +217,9 @@ def layout(
             elif "stats" in page_path() and page_ui:
                 with menu_icon_button("sym_o_expand_content", tooltip="Date"):
                     stats_date_pick_menu()
+
+            if header_actions:
+                header_actions()
 
             with menu_icon_button("sym_o_menu"):
                 menu_component()

@@ -1023,6 +1023,24 @@ class TagManager:
             return set()
 
     @staticmethod
+    def is_visible() -> bool:
+        try:
+            return bool(app.storage.user.get("index_tags_filter_visible", False))
+        except Exception as e:
+            logger.error(f"Failed to get tag filter visibility: {e}")
+            return False
+
+    @staticmethod
+    def set_visible(value: bool) -> None:
+        app.storage.user["index_tags_filter_visible"] = value
+
+    @staticmethod
+    def toggle_visible() -> bool:
+        value = not TagManager.is_visible()
+        TagManager.set_visible(value)
+        return value
+
+    @staticmethod
     def add(tag: str) -> None:
         if settings.TAG_SELECTION_MODE == TagSelectionMode.SINGLE:
             app.storage.user["index_tags_filter"] = [tag]
@@ -1055,42 +1073,14 @@ def tag_filter_component(active_habits: list[Habit], refresh: Callable):
     if not all_tags:
         return
 
-    with ui.row().classes("gap-0.5 justify-right w-80 hidden") as row:
+    classes = "gap-0.5 justify-right w-80"
+    if not TagManager.is_visible():
+        classes += " hidden"
+
+    with ui.row().classes(classes):
         for tag_name in all_tags:
             TagChip(tag_name, refresh=refresh)
         TagChip("Others", refresh=refresh)
-
-        row.classes("tag-filter")
-        ui.run_javascript(
-            """
-            const element = document.querySelector(".tag-filter");
-        
-            // scroll event
-            window.addEventListener('wheel', function(event) {
-                if (window.scrollY === 0 && event.deltaY < -30) {
-                    element.classList.remove("hidden");
-                }
-                if (window.scrollY === 0 && event.deltaY > 30) {
-                    element.classList.add("hidden");
-                }
-            }, { passive: true  });
-
-            // touch event
-            let startY;
-            window.addEventListener('touchstart', function(event) {
-                startY = event.touches[0].clientY;
-            }, { passive: true  });
-            window.addEventListener('touchmove', function(event) {
-                let currentY = event.touches[0].clientY;
-                if (window.scrollY === 0 && currentY - startY < -30) {
-                    element.classList.add("hidden");
-                }
-                if (window.scrollY === 0 && currentY - startY > 30) {
-                    element.classList.remove("hidden");
-                }
-            }, { passive: true  });
-            """
-        )
 
 
 def filter_habits_with_tags(active_habits: list[Habit]) -> list[Habit]:

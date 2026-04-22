@@ -10,10 +10,13 @@ from beaverhabits.frontend.components import (
     HabitCheckBox,
     IndexStreakBadge,
     IndexTotalBadge,
+    TagManager,
     filter_habits_with_tags,
+    get_all_tags,
     habit_name_menu,
     habits_by_tags,
     note_tick,
+    menu_icon_button,
     tag_filter_component,
 )
 from beaverhabits.frontend.layout import layout
@@ -128,7 +131,19 @@ def index_page_ui(days: list[datetime.date], habits: HabitList):
     if settings.INDEX_HABIT_DATE_REVERSE:
         days = list(reversed(days))
 
-    with layout(habit_list=habits):
+    def toggle_tag_filters() -> None:
+        TagManager.toggle_visible()
+        index_page_ui.refresh(days, habits)
+
+    def header_actions() -> None:
+        if not settings.ENABLE_TAG_FILTERS or not get_all_tags(active_habits):
+            return
+
+        icon = "sym_o_filter_alt" if TagManager.is_visible() else "sym_o_filter_alt_off"
+        tooltip = "Hide category tags" if TagManager.is_visible() else "Show category tags"
+        menu_icon_button(icon, click=toggle_tag_filters, tooltip=tooltip)
+
+    with layout(habit_list=habits, header_actions=header_actions):
         if settings.ENABLE_TAG_FILTERS:
             tag_filter_component(active_habits, refresh=habit_list_ui.refresh)
 
