@@ -39,6 +39,7 @@ COPY start.sh .
 COPY beaverhabits ./beaverhabits
 COPY statics ./statics
 COPY healthcheck.py .
+RUN sed -i 's/\r$//' start.sh
 RUN chmod -R g+w /app && \
     chown -R nobody /app
 USER nobody
