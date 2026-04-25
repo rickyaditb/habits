@@ -11,6 +11,17 @@ A self-hosted habit tracking app without "Goals"
 <img src='https://github.com/daya0576/beaverhabits/assets/6239652/c0ce98cf-5a44-4bbc-8cd3-c7afb20af671' width='250'>
 <img src='https://github.com/daya0576/beaverhabits/assets/6239652/516c19ca-9f55-4c21-9e6d-c8f0361a5eb2' width='250'>
 
+## Custom Changes in This Fork
+
+This fork includes several usability improvements and new features:
+
+- Added habit completion history pages, including per-habit and global history views
+- Added a settings option to control the number of day columns shown on the homepage
+- Improved homepage tag filter responsiveness
+- Replaced the old pull-down tag filter interaction with a dedicated toggle button
+- Disabled long-press notes on the homepage to avoid accidental triggers
+- Improved check mark visibility in light mode
+
 # Derivatives
 
 [Beaver Habit Tracker API How‐to Guide](https://github.com/daya0576/beaverhabits/wiki/Beaver-Habit-Tracker-API-How%E2%80%90to-Guide)
